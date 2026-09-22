@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+    <div id="app" class="min-h-screen flex flex-col">
+
+        <!-- ================= 1. LOGIN PAGE ================= -->
+        <div id="loginPage" class="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-800 p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">FleetPro VMS</h1>
+                    <p class="text-sm text-gray-500 mt-1">Please enter your credentials to login</p>
+                </div>
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="loginName" required placeholder="John Doe" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-200">
+                        Login to System
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ================= MAIN APP CONTAINER (Hidden until login) ================= -->
+        <div id="mainApp" class="hidden flex-1 flex flex-col">
+            <!-- Navbar -->
+            <nav class="bg-white shadow-md z-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center space-x-8">
+                            <span class="text-xl font-bold text-blue-600">FleetPro VMS</span>
+                            <div class="hidden md:flex space-x-4">
+                                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3 py-2 rounded-md text-sm font-medium text-blue-600 bg-blue-50">Dashboard</button>
+                                <button onclick="switchTab('vehicles')" id="nav-vehicles" class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600">Vehicle & Booking</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span id="welcomeUser" class="text-sm font-medium text-gray-700"></span>
+                            <!-- ================= 5. LOGOUT PAGE BUTTON ================= -->
+                            <button onclick="handleLogout()" class="px-4 py-2 border border-red-500 text-red-500 hover:bg-red-50 text-sm font-medium rounded-lg transition">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                
+                <!-- ================= 2. DASHBOARD PAGE ================= -->
+                <div id="view-dashboard" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+                            <p class="text-sm font-medium text-gray-500">Total Available Fleet</p>
+                            <p class="text-3xl font-bold text-gray-800 mt-2">3 Vehicles</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+                            <p class="text-sm font-medium text-gray-500">Total Bookings Made (How Many)</p>
+                            <p id="totalBookingCount" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+                            <p class="text-sm font-medium text-gray-500">System Status</p>
+                            <p class="text-3xl font-bold text-green-600 mt-2">Active</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow border border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Welcome to Fleet Management</h3>
+                        <p class="text-gray-600 mb-4">Click below to browse available vehicles, choose your booking details, and proceed to payment.</p>
+                        <button onclick="switchTab('vehicles')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Go to Vehicle & Booking</button>
+                    </div>
+                </div>
+
+                <!-- ================= 3. VEHICLE & BOOKING PAGE ================= -->
+                <div id="view-vehicles" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Select Vehicle & Configure Booking</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="vehicleGrid">
+                        <!-- Filled dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- ================= 4. PAYMENT PAGE ================= -->
+                <div id="view-payment" class="hidden max-w-lg mx-auto bg-white p-8 rounded-xl shadow border border-gray-100 space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Payment Gateway</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-1">
+                        <p class="text-sm text-gray-500">Selected Vehicle: <span id="payVehicleName" class="font-semibold text-gray-800"></span></p>
+                        <p class="text-sm text-gray-500">Booking Duration: <span id="payDuration" class="font-semibold text-gray-800"></span></p>
+                        <p class="text-sm text-gray-500">Total Amount Due: <span id="payTotalAmount" class="font-bold text-blue-600 text-lg"></span></p>
+                    </div>
+                    <form onsubmit="handlePayment(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Cardholder Name</label>
+                            <input type="text" required placeholder="John Doe" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Card Number</label>
+                            <input type="text" required placeholder="4111 2222 3333 4444" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700">Expiry</label>
+                                <input type="text" required placeholder="MM/YY" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700">CVV</label>
+                                <input type="password" required placeholder="123" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div class="flex space-x-4 pt-4">
+                            <button type="button" onclick="switchTab('vehicles')" class="w-1/2 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">Cancel</button>
+                            <button type="submit" class="w-1/2 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">Confirm & Pay</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ================= OUT PAGE / RECEIPT SUMMARY ================= -->
+                <div id="view-output" class="hidden max-w-lg mx-auto bg-white p-8 rounded-xl shadow border border-green-200 space-y-6 text-center">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-3xl font-bold">✓</div>
+                    <h2 class="text-2xl font-bold text-gray-800">Booking Successful!</h2>
+                    <p class="text-sm text-gray-500">Your payment has been successfully processed. Here is your separate output summary:</p>
+                    
+                    <div class="bg-gray-50 p-6 rounded-lg text-left space-y-3 border border-gray-200">
+                        <div class="flex justify-between"><span class="text-gray-500">Customer Name:</span> <span id="outName" class="font-semibold text-gray-800"></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Vehicle Booked:</span> <span id="outVehicle" class="font-semibold text-gray-800"></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Duration:</span> <span id="outDuration" class="font-semibold text-gray-800"></span></div>
+                        <div class="flex justify-between border-t pt-2"><span class="text-gray-500 font-bold">Total Paid:</span> <span id="outAmount" class="font-bold text-blue-600"></span></div>
+                    </div>
+
+                    <button onclick="switchTab('dashboard')" class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                        Return to Dashboard
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Control Logic -->
+    <script>
+        const vehicles = [
+            { id: 1, name: 'Toyota Camry', type: 'Sedan', rate: 80, image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400' },
+            { id: 2, name: 'Ford Explorer', type: 'SUV', rate: 120, image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=400' },
+            { id: 3, name: 'Tesla Model 3', type: 'Electric', rate: 110, image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=400' }
+        ];
+
+        let currentUser = "";
+        let totalBookings = 0;
+        let activeSelection = { vehicle: null, days: 1, total: 0 };
+
+        // 1. Login Handler
+        function handleLogin(event) {
+            event.preventDefault();
+            const nameInput = document.getElementById('loginName').value;
+            const passInput = document.getElementById('loginPassword').value;
+
+            if(nameInput.trim() === "" || passInput.trim() === "") {
+                alert("Please enter both Name and Password.");
+                return;
+            }
+
+            currentUser = nameInput;
+            document.getElementById('welcomeUser').innerText = `Welcome, ${currentUser}`;
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            renderVehicles();
+        }
+
+        // 5. Logout Handler
+        function handleLogout() {
+            currentUser = "";
+            document.getElementById('loginName').value = "";
+            document.getElementById('loginPassword').value = "";
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            switchTab('dashboard');
+        }
+
+        // Tab Switcher Controller
+        function switchTab(tabName) {
+            ['dashboard', 'vehicles', 'payment', 'output'].forEach(t => {
+                const el = document.getElementById(`view-${t}`);
+                if(el) el.classList.add('hidden');
+                
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (navBtn) {
+                    navBtn.className = "px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600";
+                }
+            });
+
+            const targetView = document.getElementById(`view-${tabName}`);
+            if(targetView) targetView.classList.remove('hidden');
+
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            if (activeNav) {
+                activeNav.className = "px-3 py-2 rounded-md text-sm font-medium text-blue-600 bg-blue-50";
+            }
+        }
+
+        // Render Vehicle Grid & Booking Input Control
+        function renderVehicles() {
+            const grid = document.getElementById('vehicleGrid');
+            grid.innerHTML = vehicles.map(v => `
+                <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-100 flex flex-col">
+                    <img src="${v.image}" alt="${v.name}" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider">${v.type}</span>
+                            <h3 class="text-xl font-bold text-gray-800 mt-1">${v.name}</h3>
+                            <p class="text-gray-600 mt-2">$${v.rate} / day</p>
+                            
+                            <div class="mt-4">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Select Number of Days:</label>
+                                <input type="number" id="days-${v.id}" min="1" max="30" value="1" class="w-full px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                        </div>
+                        <button onclick="proceedToPayment(${v.id})" class="mt-6 w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+                            Book Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Capture booking and transition to Payment Page
+        function proceedToPayment(id) {
+            const vehicle = vehicles.find(v => v.id === id);
+            const daysVal = parseInt(document.getElementById(`days-${id}`).value) || 1;
+            
+            activeSelection.vehicle = vehicle;
+            activeSelection.days = daysVal;
+            activeSelection.total = vehicle.rate * daysVal;
+
+            document.getElementById('payVehicleName').innerText = `${vehicle.name} (${vehicle.type})`;
+            document.getElementById('payDuration').innerText = `${daysVal} Day(s)`;
+            document.getElementById('payTotalAmount').innerText = `$${activeSelection.total}`;
+
+            switchTab('payment');
+        }
+
+        // Handle Payment and open Separate Output Page
+        function handlePayment(event) {
+            event.preventDefault();
+            
+            // Increment total bookings count
+            totalBookings++;
+            document.getElementById('totalBookingCount').innerText = totalBookings;
+
+            // Populate Output / Receipt Page Details
+            document.getElementById('outName').innerText = currentUser;
+            document.getElementById('outVehicle').innerText = activeSelection.vehicle.name;
+            document.getElementById('outDuration').innerText = `${activeSelection.days} Day(s)`;
+            document.getElementById('outAmount').innerText = `$${activeSelection.total}`;
+
+            // Switch to separate output page view
+            switchTab('output');
+        }
+    </script>
+</body>
+</html>
